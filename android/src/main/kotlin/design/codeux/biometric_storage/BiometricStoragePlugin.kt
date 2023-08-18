@@ -384,18 +384,25 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
         val biometricOnly =
             options.androidBiometricOnly || Build.VERSION.SDK_INT < Build.VERSION_CODES.R
 
-        if (biometricOnly) {
-            if (!options.androidBiometricOnly) {
-                logger.debug {
-                    "androidBiometricOnly was false, but prior " +
-                            "to ${Build.VERSION_CODES.R} this was not supported. ignoring."
+        /// Android Q/10 behaves differently than any other later version (11+), because of the biometry API changes (addition of methods like setAllowedAuthenticators)
+        /// Because of that we are separatelly allowing device credetials on Android Q/10. Without it, it was not possible to use this lib when pin was setted but no biometry was enrolled (it was throwing an exception)
+        if(Build.VERSION.SDK_INT == Build.VERSION_CODES.Q) {
+            promptBuilder.setDeviceCredentialAllowed(true)
+        } 
+        else {
+            if (biometricOnly) {
+                if (!options.androidBiometricOnly) {
+                    logger.debug {
+                        "androidBiometricOnly was false, but prior " +
+                                "to ${Build.VERSION_CODES.R} this was not supported. ignoring."
+                    }
                 }
+                promptBuilder
+                    .setAllowedAuthenticators(BIOMETRIC_STRONG)
+                    .setNegativeButtonText(promptInfo.negativeButton)
+            } else {
+                promptBuilder.setAllowedAuthenticators(DEVICE_CREDENTIAL or BIOMETRIC_STRONG)
             }
-            promptBuilder
-                .setAllowedAuthenticators(BIOMETRIC_STRONG)
-                .setNegativeButtonText(promptInfo.negativeButton)
-        } else {
-            promptBuilder.setAllowedAuthenticators(DEVICE_CREDENTIAL or BIOMETRIC_STRONG)
         }
 
         if (cipher == null || options.authenticationValidityDurationSeconds >= 0) {
