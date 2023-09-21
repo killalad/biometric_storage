@@ -300,6 +300,8 @@ class BiometricStorageFile {
     switch status {
     case errSecUserCanceled:
       code = "AuthError:UserCanceled"
+    case errSecAuthFailed:
+      code = "AuthError:UserCanceled"
     default:
       code = "SecurityError"
     }
