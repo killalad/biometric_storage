@@ -2,7 +2,9 @@ name: biometric_storage
 description: |
   Secure Storage: Encrypted data store optionally secured by biometric lock with support
   for iOS, Android, MacOS. Partial support for Linux, Windows and web (localStorage).
-version: 5.0.1-dev.1
+# We cannot use the pre-release version of the plugin, because our library publishing would not publish the plugin. (bw_auth would therefore not be able to use the plugin)
+version: 5.0.1
+# version: 5.0.1-dev.1
 homepage: https://github.com/authpass/biometric_storage/
 
 environment:
