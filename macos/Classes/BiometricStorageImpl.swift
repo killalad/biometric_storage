@@ -16,9 +16,11 @@ class InitOptions {
   init(params: [String: Any]) {
     authenticationValidityDurationSeconds = params["authenticationValidityDurationSeconds"] as? Int
     authenticationRequired = params["authenticationRequired"] as? Bool
+    darwinBiometricOnly = params["darwinBiometricOnly"] as? Bool
   }
   let authenticationValidityDurationSeconds: Int!
   let authenticationRequired: Bool!
+  let darwinBiometricOnly: Bool!
 }
 
 class IOSPromptInfo {
@@ -136,7 +138,9 @@ class BiometricStorageImpl {
     case .touchIDNotAvailable:
       result("ErrorHwUnavailable")
       break;
-    case .passcodeNotSet: fallthrough
+    case .passcodeNotSet:
+      result("ErrorPasscodeNotSet")
+      break;
     case .touchIDNotEnrolled:
       result("ErrorNoBiometricEnrolled")
       break;
@@ -183,7 +187,7 @@ class BiometricStorageFile {
       guard let access = accessControl(result) else {
         return nil
       }
-      if #available(iOS 13.0, *) {
+      if #available(iOS 13.0, macOS 10.15, *) {
         query[kSecUseDataProtectionKeychain as String] = true
       }
       query[kSecAttrAccessControl as String] = access
@@ -192,12 +196,27 @@ class BiometricStorageFile {
   }
   
   private func accessControl(_ result: @escaping StorageCallback) -> SecAccessControl? {
-
+    let accessControlFlags: SecAccessControlCreateFlags
+    
+    if initOptions.darwinBiometricOnly {
+      if #available(iOS 11.3, *) {
+        accessControlFlags =  .biometryCurrentSet
+      } else {
+        accessControlFlags = .touchIDCurrentSet
+      }
+    } else {
+      accessControlFlags = .userPresence
+    }
+        
+//      access = SecAccessControlCreateWithFlags(nil,
+//                                               kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+//                                               accessControlFlags,
+//                                               &error)
     var error: Unmanaged<CFError>?
     guard let access = SecAccessControlCreateWithFlags(
       nil, // Use the default allocator.
       kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
-      .userPresence,
+      accessControlFlags,
       &error) else {
       hpdebug("Error while creating access control flags. \(String(describing: error))")
       result(storageError("writing data", "error writing data", "\(String(describing: error))"));
