@@ -45,10 +45,17 @@ class BiometricStorageFile(
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (options.authenticationValidityDurationSeconds == -1) {
-                setUserAuthenticationParameters(
-                    0,
-                    KeyProperties.AUTH_BIOMETRIC_STRONG
-                )
+                if(options.androidBiometricOnly) {
+                    setUserAuthenticationParameters(
+                        0,
+                        KeyProperties.AUTH_BIOMETRIC_STRONG
+                    )
+                } else {
+                    setUserAuthenticationParameters(
+                        0,
+                        KeyProperties.AUTH_DEVICE_CREDENTIAL or KeyProperties.AUTH_BIOMETRIC_STRONG
+                    )
+                }
             } else {
                 setUserAuthenticationParameters(
                     options.authenticationValidityDurationSeconds,
@@ -74,9 +81,16 @@ class BiometricStorageFile(
     }
 
     private fun validateOptions() {
-        if (options.authenticationValidityDurationSeconds == -1 && !options.androidBiometricOnly) {
-            throw IllegalArgumentException("when authenticationValidityDurationSeconds is -1, androidBiometricOnly must be true")
-        }
+        /// 15. 01. 2024 - MG: I don't see the reason for this check. Previously on Pixel 4a, it was not possible to authenticate using biometry (the pin auth worked though). 
+        /// However with following changes:
+        /// - `options.authenticationValidityDurationSeconds = -1`
+        /// - commented out the check bellow 
+        /// - added `KeyProperties.AUTH_DEVICE_CREDENTIAL` to the `setUserAuthenticationParameters` above, when `options.androidBiometricOnly == false`
+        /// it now works flawlessly.
+        // 
+        // if (options.authenticationValidityDurationSeconds == -1 && !options.androidBiometricOnly) {
+        //     throw IllegalArgumentException("when authenticationValidityDurationSeconds is -1, androidBiometricOnly must be true")
+        // }
     }
 
     fun cipherForEncrypt() = cryptographyManager.getInitializedCipherForEncryption(masterKeyName)
