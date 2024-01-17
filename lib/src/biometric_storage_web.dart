@@ -59,4 +59,10 @@ class BiometricStoragePluginWeb extends BiometricStorage {
   ) async {
     html.window.localStorage[name] = content;
   }
+
+  @override
+  Future<void> dispose(String name) {
+    // TODO: implement dispose
+    throw UnimplementedError();
+  }
 }
