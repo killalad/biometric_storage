@@ -182,12 +182,22 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                     cipherForMode()
                 } catch (e: KeyPermanentlyInvalidatedException) {
                     // TODO should we communicate this to the caller?
-                    logger.warn(e) { "Key was invalidated. removing previous storage and recreating." }
+                    logger.warn(e) { "Warning!!!!!! Key was invalidated. removing previous storage and recreating." }
                     deleteFile()
                     // if deleting fails, simply throw the second time around.
                     cipherForMode()
                 }
 
+//                    try {
+//                    cipherForMode()
+//                } catch (e: KeyPermanentlyInvalidatedException) {
+//                    // TODO should we communicate this to the caller?
+//                    logger.warn(e) { "Key was invalidated. removing previous storage and recreating." }
+//                    deleteFile()
+//                    // if deleting fails, simply throw the second time around.
+//                    cipherForMode()
+//                }
+//
                 if (cipher == null) {
                     // if we have no cipher, just try the callback and see if the
                     // user requires authentication.
@@ -199,8 +209,9 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 }
 
                 val promptInfo = getAndroidPromptInfo()
+                /// BW inspekce - je klicove to poslat sem protoze potrebujeme ten cipher "zauthentizovat"
                 authenticate(cipher, promptInfo, options, {
-                    cb(cipher)
+                    cb(it)
                 }, onError = resultError)
             }
 
@@ -366,7 +377,11 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
                 @WorkerThread
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     logger.trace("onAuthenticationSucceeded($result)")
-                    worker(onError) { onSuccess(result.cryptoObject?.cipher) }
+                    worker(onError) {
+                        logger.trace("onAuthenticationSucceeded")
+                        onSuccess(result.cryptoObject?.cipher)
+
+                    }
                 }
 
                 override fun onAuthenticationFailed() {
@@ -410,6 +425,7 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
             logger.debug { "Authenticating without cipher. ${options.authenticationValidityDurationSeconds}" }
             prompt.authenticate(promptBuilder.build())
         } else {
+            /// BW inspekce - this is a must, my si musime ten nas cipher objekt zauthentizovat
             prompt.authenticate(promptBuilder.build(), BiometricPrompt.CryptoObject(cipher))
         }
     }

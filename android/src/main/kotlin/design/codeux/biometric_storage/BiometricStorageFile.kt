@@ -45,12 +45,18 @@ class BiometricStorageFile(
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (options.authenticationValidityDurationSeconds == -1) {
+
                 setUserAuthenticationParameters(
-                    0,
-                    KeyProperties.AUTH_BIOMETRIC_STRONG
+                /// BW inspekce - This is a must, without it it throws UserNotAuthenticatedException when it tries to initialize the Cipher object
+                /// Muzeme udelat na if nejak chytreji podle androidBiometricOnly
+                0,
+                KeyProperties.AUTH_DEVICE_CREDENTIAL or KeyProperties.AUTH_BIOMETRIC_STRONG
                 )
-            } else {
+            }
+            else {
                 setUserAuthenticationParameters(
+                    /// BW inspekce - This is a must, without it it throws UserNotAuthenticatedException when it tries to initialize the Cipher object
+                    /// Muzeme udelat na if nejak chytreji podle androidBiometricOnly
                     options.authenticationValidityDurationSeconds,
                     KeyProperties.AUTH_DEVICE_CREDENTIAL or KeyProperties.AUTH_BIOMETRIC_STRONG
                 )
@@ -74,9 +80,10 @@ class BiometricStorageFile(
     }
 
     private fun validateOptions() {
-        if (options.authenticationValidityDurationSeconds == -1 && !options.androidBiometricOnly) {
-            throw IllegalArgumentException("when authenticationValidityDurationSeconds is -1, androidBiometricOnly must be true")
-        }
+        // BW inspekce - Nutne jinak by to vyhazovalo vyjimku pricemz je to prave spravna configurace
+        // if (options.authenticationValidityDurationSeconds == -1 && !options.androidBiometricOnly) {
+        //     throw IllegalArgumentException("when authenticationValidityDurationSeconds is -1, androidBiometricOnly must be true")
+        // }
     }
 
     fun cipherForEncrypt() = cryptographyManager.getInitializedCipherForEncryption(masterKeyName)
