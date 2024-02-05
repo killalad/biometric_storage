@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyProperties
-import io.github.oshai.kotlinlogging.KotlinLogging
+import mu.KotlinLogging
 import java.io.File
 import java.io.IOException
 import javax.crypto.Cipher
