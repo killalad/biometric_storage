@@ -223,7 +223,11 @@ class BiometricStoragePlugin : FlutterPlugin, ActivityAware, MethodCallHandler {
 
                     val options = call.argument<Map<String, Any>>("options")?.let {
                         InitOptions(
-                            authenticationValidityDurationSeconds = it["authenticationValidityDurationSeconds"] as Int,
+                            // Because whatever reason, on Android 10 and lower you cannot use authenticationValidityDurationSeconds set to -1 and androidBiometricOnly set to false.
+                            // Therefore, we will override whatever was passed in and use constant "1" second if we have Android 10 and lower. This would theoretically work for newer Androids, however
+                            // from our testing it was flaky and sometimes didn't work at all (e.g. on the Google Pixel family), and for Android 11 and up we want to use combination
+                            // authenticationValidityDurationSeconds: -1 and androidBiometricOnly: false, which is working perfectly everywhere
+                            authenticationValidityDurationSeconds =  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) (it["authenticationValidityDurationSeconds"] as Int) else 1,
                             authenticationRequired = it["authenticationRequired"] as Boolean,
                             androidBiometricOnly = it["androidBiometricOnly"] as Boolean,
                         )
